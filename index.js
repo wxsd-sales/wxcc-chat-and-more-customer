@@ -1,4 +1,4 @@
-const ACCESS_TOKEN = "";
+
 const TO_PERSON_EMAIL = "vvazquez@wxsd.us";
 
 const chatHistory = document.getElementById("chat-history");

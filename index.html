@@ -32,7 +32,7 @@
 
       /* ── Top header bar ── */
       #header {
-        background-color: #003087;
+        background-color: #1a56a0;
         display: flex;
         align-items: center;
         gap: 12px;
@@ -50,6 +50,12 @@
         font-size: 1rem;
         font-weight: 400;
         letter-spacing: 0.01em;
+        flex: 1;
+      }
+
+      #header-camera {
+        flex-shrink: 0;
+        opacity: 0.9;
       }
 
       /* ── Hero image ── */
@@ -195,6 +201,9 @@
           alt="United Airlines"
         />
         <span id="header-title">Agent on Demand</span>
+        <svg id="header-camera" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="22" height="22" aria-hidden="true">
+          <path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11l-4 4z"/>
+        </svg>
       </header>
 
       <img
