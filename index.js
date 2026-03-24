@@ -1,5 +1,12 @@
+const urlParams = new URLSearchParams(window.location.search);
+const ACCESS_TOKEN = urlParams.get("token");
+const TO_PERSON_EMAIL = urlParams.get("email") || "vvazquez@wxsd.us";
+const VIDEO_DESTINATION = urlParams.get("destination") || "https://wxsd.webex.com/wxsd/j.php?MTID=md2fcfba19d7b995d354add25cf452812";
 
-const TO_PERSON_EMAIL = "vvazquez@wxsd.us";
+if (!ACCESS_TOKEN) {
+  document.body.innerHTML = "<p style='padding:2rem;font-family:sans-serif;color:red;'>Missing <code>?token=</code> URL parameter.</p>";
+  throw new Error("No access token provided");
+}
 
 const chatHistory = document.getElementById("chat-history");
 const chatInput = document.getElementById("chat-input");
@@ -19,10 +26,91 @@ function setStatus(text) {
 }
 
 // Step 1 — init Webex SDK with the access token
-const webex = Webex.init({
+const webex = window.Webex.init({
+  logger: { level: "debug" },
   credentials: { access_token: ACCESS_TOKEN },
 });
 console.log("[WxCC]: Webex SDK initialized");
+
+let meetingsRegistered = false;
+
+webex.once("ready", () => {
+  console.log("[WxCC]: Webex ready");
+  webex.meetings.register()
+    .then(() => {
+      console.log("[WxCC]: meetings registered");
+      meetingsRegistered = true;
+    })
+    .catch((err) => console.error("[WxCC]: meetings register error", err));
+});
+
+// Video join
+async function startVideo() {
+  try {
+    setStatus("Starting video...");
+    if (!meetingsRegistered) {
+      console.error("[WxCC]: meetings not registered yet");
+      setStatus("Not ready yet, please try again.");
+      return;
+    }
+
+    const meeting = await webex.meetings.create(VIDEO_DESTINATION);
+    console.log("[WxCC]: meeting created", meeting);
+
+    const microphoneStream = await webex.meetings.mediaHelpers.createMicrophoneStream({
+      echoCancellation: true,
+      noiseSuppression: true,
+    });
+    const cameraStream = await webex.meetings.mediaHelpers.createCameraStream({ width: 640, height: 480 });
+    console.log("[WxCC]: local streams created");
+
+    document.getElementById("self-view").srcObject = cameraStream.outputStream;
+
+    meeting.on("error", (error) => console.error("[WxCC]: meeting error", error));
+
+    meeting.on("media:ready", (media) => {
+      console.log("[WxCC]: media:ready", media.type);
+      if (media.type === "remoteVideo") {
+        document.getElementById("remote-view-video").srcObject = media.stream;
+        document.getElementById("video-container").style.display = "";
+        document.getElementById("hero-image").style.display = "none";
+      } else if (media.type === "remoteAudio") {
+        document.getElementById("remote-view-audio").srcObject = media.stream;
+      }
+    });
+
+    meeting.on("media:stopped", (media) => {
+      console.log("[WxCC]: media:stopped", media.type);
+      if (media.type === "remoteVideo") {
+        document.getElementById("remote-view-video").srcObject = null;
+      } else if (media.type === "remoteAudio") {
+        document.getElementById("remote-view-audio").srcObject = null;
+      }
+    });
+
+    console.log("[WxCC]: meetings.registered =", webex.meetings.registered);
+
+    await meeting.joinWithMedia({
+      mediaOptions: {
+        allowMediaInLobby: true,
+        bundlePolicy: "max-bundle",
+        localStreams: {
+          camera: cameraStream,
+          microphone: microphoneStream,
+        },
+      },
+    });
+
+    console.log("[WxCC]: meeting joined with media");
+    setStatus("");
+  } catch (error) {
+    console.error("[WxCC]: startVideo error:", error);
+    console.error("[WxCC]: error name:", error.name);
+    console.error("[WxCC]: error message:", error.message);
+    console.error("[WxCC]: error stack:", error.stack);
+    setStatus("Could not start video.");
+  }
+}
 
 // Step 2 — start listening for incoming messages
 async function initMessaging() {
@@ -35,7 +123,13 @@ async function initMessaging() {
     webex.messages.on("created", (event) => {
       console.log("[WxCC]: incoming message", event);
       if (event.data.personEmail === me.emails[0]) return;
-      appendMessage("them", event.data.text);
+      const text = event.data.text;
+      if (text && text.trim() === "/startvideo") {
+        console.log("[WxCC]: /startvideo received, starting video...");
+        startVideo();
+        return;
+      }
+      appendMessage("them", text);
     });
   } catch (error) {
     console.error("[WxCC]: messages listen error:", error);
