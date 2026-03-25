@@ -25,94 +25,32 @@ function setStatus(text) {
   statusEl.textContent = text;
 }
 
-// Step 1 — init Webex SDK with the access token
+// STEP-1: Initialize the Webex SDK with the token from the URL param.
+// window.Webex is the UMD bundle loaded via CDN script tag in index.html.
+// This does NOT connect yet — the SDK fires "ready" when it's fully initialized.
 const webex = window.Webex.init({
   logger: { level: "debug" },
   credentials: { access_token: ACCESS_TOKEN },
 });
 console.log("[WxCC]: Webex SDK initialized");
 
-let meetingsRegistered = false;
-
+// STEP-2: Wait for the SDK to be ready, then register for meetings.
+// register() must complete before we can create or join any meeting.
+// Only after register() do we start listening for messages (STEP-3).
 webex.once("ready", () => {
   console.log("[WxCC]: Webex ready");
-  webex.meetings.register()
+  webex.meetings
+    .register()
     .then(() => {
       console.log("[WxCC]: meetings registered");
-      meetingsRegistered = true;
+      initMessaging();
     })
     .catch((err) => console.error("[WxCC]: meetings register error", err));
 });
 
-// Video join
-async function startVideo() {
-  try {
-    setStatus("Starting video...");
-    if (!meetingsRegistered) {
-      console.error("[WxCC]: meetings not registered yet");
-      setStatus("Not ready yet, please try again.");
-      return;
-    }
-
-    const meeting = await webex.meetings.create(VIDEO_DESTINATION);
-    console.log("[WxCC]: meeting created", meeting);
-
-    const microphoneStream = await webex.meetings.mediaHelpers.createMicrophoneStream({
-      echoCancellation: true,
-      noiseSuppression: true,
-    });
-    const cameraStream = await webex.meetings.mediaHelpers.createCameraStream({ width: 640, height: 480 });
-    console.log("[WxCC]: local streams created");
-
-    document.getElementById("self-view").srcObject = cameraStream.outputStream;
-
-    meeting.on("error", (error) => console.error("[WxCC]: meeting error", error));
-
-    meeting.on("media:ready", (media) => {
-      console.log("[WxCC]: media:ready", media.type);
-      if (media.type === "remoteVideo") {
-        document.getElementById("remote-view-video").srcObject = media.stream;
-        document.getElementById("video-container").style.display = "";
-        document.getElementById("hero-image").style.display = "none";
-      } else if (media.type === "remoteAudio") {
-        document.getElementById("remote-view-audio").srcObject = media.stream;
-      }
-    });
-
-    meeting.on("media:stopped", (media) => {
-      console.log("[WxCC]: media:stopped", media.type);
-      if (media.type === "remoteVideo") {
-        document.getElementById("remote-view-video").srcObject = null;
-      } else if (media.type === "remoteAudio") {
-        document.getElementById("remote-view-audio").srcObject = null;
-      }
-    });
-
-    console.log("[WxCC]: meetings.registered =", webex.meetings.registered);
-
-    await meeting.joinWithMedia({
-      mediaOptions: {
-        allowMediaInLobby: true,
-        bundlePolicy: "max-bundle",
-        localStreams: {
-          camera: cameraStream,
-          microphone: microphoneStream,
-        },
-      },
-    });
-
-    console.log("[WxCC]: meeting joined with media");
-    setStatus("");
-  } catch (error) {
-    console.error("[WxCC]: startVideo error:", error);
-    console.error("[WxCC]: error name:", error.name);
-    console.error("[WxCC]: error message:", error.message);
-    console.error("[WxCC]: error stack:", error.stack);
-    setStatus("Could not start video.");
-  }
-}
-
-// Step 2 — start listening for incoming messages
+// STEP-3: Open a websocket to receive real-time Webex messages.
+// We filter out our own messages using our email from webex.people.get("me").
+// If the agent sends "/startvideo", we trigger the video join (STEP-4).
 async function initMessaging() {
   try {
     await webex.messages.listen();
@@ -136,9 +74,78 @@ async function initMessaging() {
   }
 }
 
-initMessaging();
+// STEP-4: Join the video meeting.
+// Triggered by the agent sending "/startvideo" via chat.
+// Creates the meeting object, creates local camera/mic streams,
+// binds media events, then calls joinWithMedia to actually connect.
+async function startVideo() {
+  try {
+    setStatus("Starting video...");
 
-// Step 3 — send via Webex SDK
+    // STEP-4a: Create the meeting handle for the video destination.
+    const meeting = await webex.meetings.create(VIDEO_DESTINATION);
+    console.log("[WxCC]: meeting created", meeting);
+
+    // STEP-4b: Create local camera and microphone streams.
+    const microphoneStream = await webex.meetings.mediaHelpers.createMicrophoneStream({
+      echoCancellation: true,
+      noiseSuppression: true,
+    });
+    const cameraStream = await webex.meetings.mediaHelpers.createCameraStream({ width: 640, height: 480 });
+    console.log("[WxCC]: local streams created");
+
+    // Show the local camera in the self-view element immediately.
+    document.getElementById("self-view").srcObject = cameraStream.outputStream;
+
+    // STEP-4c: Bind meeting SDK events BEFORE joining.
+    // media:ready fires when remote video/audio streams are available.
+    // media:stopped fires when the meeting ends.
+    meeting.on("error", (error) => console.error("[WxCC]: meeting error", error));
+
+    meeting.on("media:ready", (media) => {
+      console.log("[WxCC]: media:ready", media.type);
+      if (media.type === "remoteVideo") {
+        document.getElementById("remote-view-video").srcObject = media.stream;
+        document.getElementById("video-container").style.display = "";
+        document.getElementById("hero-image").style.display = "none";
+      } else if (media.type === "remoteAudio") {
+        document.getElementById("remote-view-audio").srcObject = media.stream;
+      }
+    });
+
+    meeting.on("media:stopped", (media) => {
+      console.log("[WxCC]: media:stopped", media.type);
+      if (media.type === "remoteVideo") {
+        document.getElementById("remote-view-video").srcObject = null;
+      } else if (media.type === "remoteAudio") {
+        document.getElementById("remote-view-audio").srcObject = null;
+      }
+    });
+
+    // STEP-4d: Join the meeting with local media streams.
+    await meeting.joinWithMedia({
+      mediaOptions: {
+        allowMediaInLobby: true,
+        bundlePolicy: "max-bundle",
+        localStreams: {
+          camera: cameraStream,
+          microphone: microphoneStream,
+        },
+      },
+    });
+
+    console.log("[WxCC]: meeting joined with media");
+    setStatus("");
+  } catch (error) {
+    console.error("[WxCC]: startVideo error:", error);
+    console.error("[WxCC]: error name:", error.name);
+    console.error("[WxCC]: error message:", error.message);
+    console.error("[WxCC]: error stack:", error.stack);
+    setStatus("Could not start video.");
+  }
+}
+
+// STEP-5: Send a chat message to the agent via Webex messages API.
 async function sendMessage() {
   const text = chatInput.value.trim();
   console.log("[WxCC]: sendMessage called, text:", text);
