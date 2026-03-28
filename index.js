@@ -103,9 +103,10 @@ async function initMessaging(webex) {
     const me = await webex.people.get("me");
     console.log("[WxCC]: logged in as", me.emails[0]);
 
-    // STEP-0: Now that we have the customer's email, request an agent from WxCC.
+    // STEP-0: Now that we have the customer's identity, request an agent from WxCC.
+    // We send me.id in the customerEmail field so the widget can use it as toPersonId.
     const customerName = new URLSearchParams(window.location.search).get("name") || "Guest";
-    await requestAgent(customerName, me.emails[0]).catch((err) => console.error("[WxCC]: agent request error", err));
+    await requestAgent(customerName, me.id).catch((err) => console.error("[WxCC]: agent request error", err));
 
     webex.messages.on("created", (event) => {
       console.log("[WxCC]: incoming message", event);
