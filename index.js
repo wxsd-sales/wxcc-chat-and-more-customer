@@ -1,12 +1,6 @@
-const urlParams = new URLSearchParams(window.location.search);
-const ACCESS_TOKEN = urlParams.get("token");
-const TO_PERSON_EMAIL = urlParams.get("email") || "vvazquez@wxsd.us";
-const VIDEO_DESTINATION = urlParams.get("destination") || "https://wxsd.webex.com/wxsd/j.php?MTID=md2fcfba19d7b995d354add25cf452812";
-
-if (!ACCESS_TOKEN) {
-  document.body.innerHTML = "<p style='padding:2rem;font-family:sans-serif;color:red;'>Missing <code>?token=</code> URL parameter.</p>";
-  throw new Error("No access token provided");
-}
+const BACKEND_URL = "http://localhost:3000";
+const TO_PERSON_EMAIL = "vvazquez@wxsd.us";
+const VIDEO_DESTINATION = "https://wxsd.webex.com/wxsd/j.php?MTID=md2fcfba19d7b995d354add25cf452812";
 
 const chatHistory = document.getElementById("chat-history");
 const chatInput = document.getElementById("chat-input");
@@ -25,33 +19,64 @@ function setStatus(text) {
   statusEl.textContent = text;
 }
 
-// STEP-1: Initialize the Webex SDK with the token from the URL param.
-// window.Webex is the UMD bundle loaded via CDN script tag in index.html.
-// This does NOT connect yet — the SDK fires "ready" when it's fully initialized.
-const webex = window.Webex.init({
-  logger: { level: "debug" },
-  credentials: { access_token: ACCESS_TOKEN },
-});
-console.log("[WxCC]: Webex SDK initialized");
+// Returns token from URL param if present, otherwise fetches from backend.
+// Passes ?name= to the backend so it can set the guest's display name in the meeting.
+async function getAccessToken() {
+  const params = new URLSearchParams(window.location.search);
+  const urlToken = params.get("token");
+  if (urlToken) {
+    console.log("[WxCC]: using token from URL param");
+    return urlToken;
+  }
+  const name = params.get("name") || "Guest";
+  console.log("[WxCC]: fetching token from backend for", name);
+  const response = await fetch(`${BACKEND_URL}/api/get-token?name=${encodeURIComponent(name)}`);
+  const data = await response.json();
+  return data.accessToken;
+}
 
-// STEP-2: Wait for the SDK to be ready, then register for meetings.
-// register() must complete before we can create or join any meeting.
-// Only after register() do we start listening for messages (STEP-3).
-webex.once("ready", () => {
-  console.log("[WxCC]: Webex ready");
-  webex.meetings
-    .register()
-    .then(() => {
-      console.log("[WxCC]: meetings registered");
-      initMessaging();
-    })
-    .catch((err) => console.error("[WxCC]: meetings register error", err));
-});
+async function init() {
+  // STEP-1: Get the access token (from URL param or backend), then initialize
+  // the Webex SDK. window.Webex is the UMD bundle loaded via CDN in index.html.
+  // This does NOT connect yet — the SDK fires "ready" when it's fully initialized.
+  const accessToken = await getAccessToken().catch((err) => {
+    console.error("[WxCC]: failed to get access token", err);
+    return null;
+  });
+
+  if (!accessToken) return;
+
+  const webex = window.Webex.init({
+    logger: { level: "debug" },
+    credentials: { access_token: accessToken },
+  });
+  console.log("[WxCC]: Webex SDK initialized");
+
+  // STEP-2: Wait for the SDK to be ready, then register for meetings.
+  // register() must complete before we can create or join any meeting.
+  // Only after register() do we start listening for messages (STEP-3).
+  webex.once("ready", () => {
+    console.log("[WxCC]: Webex ready");
+    webex.meetings
+      .register()
+      .then(() => {
+        console.log("[WxCC]: meetings registered");
+        initMessaging(webex);
+      })
+      .catch((err) => console.error("[WxCC]: meetings register error", err));
+  });
+
+  // STEP-5: Wire up the chat send button.
+  chatSend.addEventListener("click", () => sendMessage(webex));
+  chatInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") sendMessage(webex);
+  });
+}
 
 // STEP-3: Open a websocket to receive real-time Webex messages.
 // We filter out our own messages using our email from webex.people.get("me").
 // If the agent sends "/startvideo", we trigger the video join (STEP-4).
-async function initMessaging() {
+async function initMessaging(webex) {
   try {
     await webex.messages.listen();
     console.log("[WxCC]: messages listening started");
@@ -64,7 +89,7 @@ async function initMessaging() {
       const text = event.data.text;
       if (text && text.trim() === "/startvideo") {
         console.log("[WxCC]: /startvideo received, starting video...");
-        startVideo();
+        startVideo(webex);
         return;
       }
       appendMessage("them", text);
@@ -78,7 +103,7 @@ async function initMessaging() {
 // Triggered by the agent sending "/startvideo" via chat.
 // Creates the meeting object, creates local camera/mic streams,
 // binds media events, then calls joinWithMedia to actually connect.
-async function startVideo() {
+async function startVideo(webex) {
   try {
     setStatus("Starting video...");
 
@@ -146,7 +171,7 @@ async function startVideo() {
 }
 
 // STEP-5: Send a chat message to the agent via Webex messages API.
-async function sendMessage() {
+async function sendMessage(webex) {
   const text = chatInput.value.trim();
   console.log("[WxCC]: sendMessage called, text:", text);
   if (!text) return;
@@ -165,9 +190,4 @@ async function sendMessage() {
   }
 }
 
-chatSend.addEventListener("click", sendMessage);
-chatInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") sendMessage();
-});
-
-chatHistory.scrollTop = chatHistory.scrollHeight;
+init();
