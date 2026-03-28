@@ -2,7 +2,6 @@ const BACKEND_URL = "http://localhost:3000";
 const WXCC_HOOK_URL = "https://hooks.us.webexconnect.io/events/12IOCZHHTT";
 const TO_PERSON_EMAIL = "vvazquez@wxsd.us";
 const VIDEO_DESTINATION = new URLSearchParams(window.location.search).get("destination");
-const CUSTOMER_EMAIL = "vvazquez@cisco.com";
 const INAPP_APP_ID = "VI24093513";
 const INAPP_USER_ID = "6806ea7s-a04e-4fdb-9d86-0b33626f3577";
 
@@ -25,13 +24,13 @@ function setStatus(text) {
 
 // STEP-0: Notify WxCC to assign an agent for this customer session.
 // Called before SDK init — no auth required.
-async function requestAgent(customerName) {
+async function requestAgent(customerName, customerEmail) {
   const response = await fetch(WXCC_HOOK_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       customerName,
-      customerEmail: CUSTOMER_EMAIL,
+      customerEmail,
       videoCallDestination: VIDEO_DESTINATION,
       "inappmessaging.appId": INAPP_APP_ID,
       "inappmessaging.userId": INAPP_USER_ID,
@@ -57,10 +56,6 @@ async function getAccessToken() {
 }
 
 async function init() {
-  // STEP-0: Request an agent from WxCC before anything else.
-  const customerName = new URLSearchParams(window.location.search).get("name") || "Guest";
-  await requestAgent(customerName).catch((err) => console.error("[WxCC]: agent request error", err));
-
   // STEP-1: Get the access token (from URL param or backend), then initialize
   // the Webex SDK. window.Webex is the UMD bundle loaded via CDN in index.html.
   // This does NOT connect yet — the SDK fires "ready" when it's fully initialized.
@@ -107,6 +102,10 @@ async function initMessaging(webex) {
     console.log("[WxCC]: messages listening started");
     const me = await webex.people.get("me");
     console.log("[WxCC]: logged in as", me.emails[0]);
+
+    // STEP-0: Now that we have the customer's email, request an agent from WxCC.
+    const customerName = new URLSearchParams(window.location.search).get("name") || "Guest";
+    await requestAgent(customerName, me.emails[0]).catch((err) => console.error("[WxCC]: agent request error", err));
 
     webex.messages.on("created", (event) => {
       console.log("[WxCC]: incoming message", event);
