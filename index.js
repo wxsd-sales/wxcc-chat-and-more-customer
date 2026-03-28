@@ -32,7 +32,7 @@ async function getAccessToken() {
   console.log("[WxCC]: fetching token from backend for", name);
   const response = await fetch(`${BACKEND_URL}/api/get-token?name=${encodeURIComponent(name)}`);
   const data = await response.json();
-  return data.token;
+  return data.accessToken;
 }
 
 async function init() {
