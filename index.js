@@ -1,6 +1,6 @@
 const BACKEND_URL = "http://localhost:3000";
 const TO_PERSON_EMAIL = "vvazquez@wxsd.us";
-const VIDEO_DESTINATION = "https://wxsd.webex.com/wxsd/j.php?MTID=md2fcfba19d7b995d354add25cf452812";
+const VIDEO_DESTINATION = new URLSearchParams(window.location.search).get("destination");
 
 const chatHistory = document.getElementById("chat-history");
 const chatInput = document.getElementById("chat-input");
@@ -161,6 +161,37 @@ async function startVideo(webex) {
 
     console.log("[WxCC]: meeting joined with media");
     setStatus("");
+
+    // Wire up camera and mic toggle buttons now that we have a live meeting
+    const cameraBtn = document.getElementById("header-camera");
+    const micBtn = document.getElementById("header-mic");
+    let videoMuted = false;
+    let audioMuted = false;
+
+    cameraBtn.style.opacity = "1";
+    micBtn.style.opacity = "1";
+
+    cameraBtn.addEventListener("click", async () => {
+      if (videoMuted) {
+        await meeting.unmuteVideo();
+        cameraBtn.style.opacity = "1";
+      } else {
+        await meeting.muteVideo();
+        cameraBtn.style.opacity = "0.4";
+      }
+      videoMuted = !videoMuted;
+    });
+
+    micBtn.addEventListener("click", async () => {
+      if (audioMuted) {
+        await meeting.unmuteAudio();
+        micBtn.style.opacity = "1";
+      } else {
+        await meeting.muteAudio();
+        micBtn.style.opacity = "0.4";
+      }
+      audioMuted = !audioMuted;
+    });
   } catch (error) {
     console.error("[WxCC]: startVideo error:", error);
     console.error("[WxCC]: error name:", error.name);
