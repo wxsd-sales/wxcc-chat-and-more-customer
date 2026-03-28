@@ -162,35 +162,23 @@ async function startVideo(webex) {
     console.log("[WxCC]: meeting joined with media");
     setStatus("");
 
-    // Wire up camera and mic toggle buttons now that we have a live meeting
+    // Wire up camera and mic toggle buttons now that we have live streams
     const cameraBtn = document.getElementById("header-camera");
     const micBtn = document.getElementById("header-mic");
-    let videoMuted = false;
-    let audioMuted = false;
 
     cameraBtn.style.opacity = "1";
     micBtn.style.opacity = "1";
 
-    cameraBtn.addEventListener("click", async () => {
-      if (videoMuted) {
-        await meeting.unmuteVideo();
-        cameraBtn.style.opacity = "1";
-      } else {
-        await meeting.muteVideo();
-        cameraBtn.style.opacity = "0.4";
-      }
-      videoMuted = !videoMuted;
+    cameraBtn.addEventListener("click", () => {
+      const newMuted = !cameraStream.userMuted;
+      cameraStream.setUserMuted(newMuted);
+      cameraBtn.style.opacity = newMuted ? "0.4" : "1";
     });
 
-    micBtn.addEventListener("click", async () => {
-      if (audioMuted) {
-        await meeting.unmuteAudio();
-        micBtn.style.opacity = "1";
-      } else {
-        await meeting.muteAudio();
-        micBtn.style.opacity = "0.4";
-      }
-      audioMuted = !audioMuted;
+    micBtn.addEventListener("click", () => {
+      const newMuted = !microphoneStream.userMuted;
+      microphoneStream.setUserMuted(newMuted);
+      micBtn.style.opacity = newMuted ? "0.4" : "1";
     });
   } catch (error) {
     console.error("[WxCC]: startVideo error:", error);
