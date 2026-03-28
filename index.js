@@ -1,6 +1,6 @@
 const BACKEND_URL = "http://localhost:3000";
 const TO_PERSON_EMAIL = "vvazquez@wxsd.us";
-const VIDEO_DESTINATION = "https://wxsd.webex.com/wxsd/j.php?MTID=md2fcfba19d7b995d354add25cf452812";
+const VIDEO_DESTINATION = new URLSearchParams(window.location.search).get("destination");
 
 const chatHistory = document.getElementById("chat-history");
 const chatInput = document.getElementById("chat-input");
