@@ -10,6 +10,14 @@ const chatInput = document.getElementById("chat-input");
 const chatSend = document.getElementById("chat-send");
 const statusEl = document.getElementById("status");
 
+function appendSystemMessage(sender, text) {
+  const msg = document.createElement("div");
+  msg.className = "chat-message chat-message--system";
+  msg.innerHTML = `<span class="system-sender">${sender}</span><em>${text}</em>`;
+  chatHistory.appendChild(msg);
+  chatHistory.scrollTop = chatHistory.scrollHeight;
+}
+
 function appendMessage(from, text) {
   const msg = document.createElement("div");
   msg.className = `chat-message chat-message--${from}`;
@@ -98,6 +106,8 @@ async function init() {
 // If the agent sends "/startvideo", we trigger the video join (STEP-4).
 async function initMessaging(webex) {
   try {
+    appendSystemMessage("Concierge", "An Agent will be with you soon; please check back on this browser for assistance. Agent On Demand only accepts payments from authorized credit cards verified during flight check-in.");
+
     await webex.messages.listen();
     console.log("[WxCC]: messages listening started");
     const me = await webex.people.get("me");

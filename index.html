@@ -86,18 +86,6 @@
         gap: 16px;
       }
 
-      #greeting {
-        font-size: 1rem;
-        font-weight: 600;
-        color: #333;
-      }
-
-      #subtext {
-        font-size: 0.85rem;
-        color: #666;
-        margin-top: 4px;
-      }
-
       /* ── Chat wrapper ── */
       #chat-wrapper {
         flex: 1;
@@ -142,6 +130,27 @@
         background-color: #e6e8e8;
         color: #000;
         border-bottom-left-radius: 4px;
+      }
+
+      .chat-message--system {
+        align-self: flex-start;
+        background-color: #fff;
+        color: #555;
+        border: 1px solid #e6e8e8;
+        border-bottom-left-radius: 4px;
+        max-width: 92%;
+      }
+
+      .chat-message--system .system-sender {
+        display: block;
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: #1a56a0;
+        margin-bottom: 4px;
+      }
+
+      .chat-message--system em {
+        font-style: italic;
       }
 
       /* ── Chat input bar ── */
@@ -232,10 +241,6 @@
       />
 
       <div id="content">
-        <div>
-          <p id="greeting">Hi, how can we help?</p>
-          <p id="subtext">A United Airlines agent is ready to assist you.</p>
-        </div>
 
         <div id="chat-wrapper">
           <div id="chat-history"></div>
