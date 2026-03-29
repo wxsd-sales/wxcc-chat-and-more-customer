@@ -185,11 +185,15 @@ async function startVideo(webex) {
       } else if (media.type === "remoteAudio") {
         document.getElementById("remote-view-audio").srcObject = media.stream;
       } else if (media.type === "remoteShare") {
-        // Screen share started — show share video, hide remote video
-        document.getElementById("remote-share-video").srcObject = media.stream;
-        document.getElementById("remote-share-video").style.display = "block";
-        document.getElementById("remote-view-video").style.display = "none";
-        console.log("[WxCC]: screen share started on customer side");
+        // Only show share if the stream has active tracks
+        if (media.stream && media.stream.getTracks().length > 0) {
+          document.getElementById("remote-share-video").srcObject = media.stream;
+          document.getElementById("remote-share-video").style.display = "block";
+          document.getElementById("remote-view-video").style.display = "none";
+          console.log("[WxCC]: screen share started on customer side");
+        } else {
+          console.log("[WxCC]: remoteShare ready but no active tracks, ignoring");
+        }
       }
     });
 
