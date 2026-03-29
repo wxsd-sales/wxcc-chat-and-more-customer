@@ -1,7 +1,8 @@
 const BACKEND_URL = "http://localhost:3000";
 const WXCC_HOOK_URL = "https://hooks.us.webexconnect.io/events/12IOCZHHTT";
-const TO_PERSON_EMAIL = "vvazquez@wxsd.us";
 const VIDEO_DESTINATION = new URLSearchParams(window.location.search).get("destination");
+
+let toPersonEmail = null; // set when first message is received from agent
 const INAPP_APP_ID = "VI24093513";
 const INAPP_USER_ID = "6806ea7s-a04e-4fdb-9d86-0b33626f3577";
 
@@ -95,6 +96,9 @@ async function init() {
   });
 
   // STEP-5: Wire up the chat send button.
+  chatSend.disabled = true;
+  chatSend.style.opacity = "0.4";
+
   chatSend.addEventListener("click", () => sendMessage(webex));
   chatInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter") sendMessage(webex);
@@ -121,6 +125,15 @@ async function initMessaging(webex) {
     webex.messages.on("created", (event) => {
       console.log("[WxCC]: incoming message", event);
       if (event.data.personEmail === me.emails[0]) return;
+
+      // Capture agent email from first incoming message and enable send button
+      if (!toPersonEmail) {
+        toPersonEmail = event.data.personEmail;
+        console.log("[WxCC]: agent email set to", toPersonEmail);
+        chatSend.disabled = false;
+        chatSend.style.opacity = "1";
+      }
+
       const text = event.data.text;
       if (text && text.trim() === "/startvideo") {
         console.log("[WxCC]: /startvideo received, starting video...");
@@ -235,7 +248,7 @@ async function sendMessage(webex) {
   chatInput.focus();
 
   try {
-    await webex.messages.create({ toPersonEmail: TO_PERSON_EMAIL, text });
+    await webex.messages.create({ toPersonEmail, text });
     console.log("[WxCC]: message sent successfully");
     setStatus("");
   } catch (error) {
