@@ -210,9 +210,21 @@ async function startVideo(webex) {
     console.log("[WxCC]: meeting joined with media");
     setStatus("");
 
-    // Wire up camera and mic toggle buttons now that we have live streams
+    // Wire up camera, mic and end buttons now that we have a live meeting
     const cameraBtn = document.getElementById("header-camera");
     const micBtn = document.getElementById("header-mic");
+    const endBtn = document.getElementById("header-end");
+
+    endBtn.style.display = "";
+    endBtn.addEventListener("click", async () => {
+      await meeting.leave();
+      console.log("[WxCC]: meeting left");
+      endBtn.style.display = "none";
+      document.getElementById("video-container").style.display = "none";
+      document.getElementById("hero-image").style.display = "";
+      cameraBtn.style.opacity = "0.4";
+      micBtn.style.opacity = "0.4";
+    });
 
     cameraBtn.style.opacity = "1";
     micBtn.style.opacity = "1";
