@@ -1,4 +1,5 @@
-const BACKEND_URL = "http://localhost:3000";
+// const BACKEND_URL = "http://localhost:3000";
+const BACKEND_URL = "https://258d-2a0c-5a84-e609-a00-84d4-e94e-1551-7d59.ngrok-free.app";
 const WXCC_HOOK_URL = "https://hooks.us.webexconnect.io/events/12IOCZHHTT";
 const VIDEO_DESTINATION = new URLSearchParams(window.location.search).get("destination");
 
@@ -183,17 +184,36 @@ async function startVideo(webex) {
         document.getElementById("hero-image").style.display = "none";
       } else if (media.type === "remoteAudio") {
         document.getElementById("remote-view-audio").srcObject = media.stream;
+      } else if (media.type === "remoteShare") {
+        // Just assign the stream — show/hide is handled by startedSharingRemote/stoppedSharingRemote
+        document.getElementById("remote-share-video").srcObject = media.stream;
+        console.log("[WxCC]: remoteShare stream assigned");
       }
     });
 
     meeting.on("media:stopped", (media) => {
       console.log("[WxCC]: media:stopped", media.type);
-      if (media.type === "remoteVideo") {
-        document.getElementById("remote-view-video").srcObject = null;
-        resetVideoUI();
-      } else if (media.type === "remoteAudio") {
+      if (media.type === "remoteAudio") {
         document.getElementById("remote-view-audio").srcObject = null;
+      } else if (media.type === "remoteShare") {
+        document.getElementById("remote-share-video").srcObject = null;
       }
+    });
+
+    meeting.on("meeting:startedSharingRemote", () => {
+      console.log("[WxCC]: screen share started on customer side");
+      document.getElementById("remote-share-video").style.display = "block";
+      document.getElementById("remote-view-video").style.display = "none";
+    });
+
+    meeting.on("meeting:stoppedSharingRemote", () => {
+      console.log("[WxCC]: screen share stopped on customer side");
+      const shareEl = document.getElementById("remote-share-video");
+      const temp = shareEl.srcObject;
+      shareEl.srcObject = null;
+      shareEl.srcObject = temp;
+      shareEl.style.display = "none";
+      document.getElementById("remote-view-video").style.display = "block";
     });
 
     // STEP-4d: Join the meeting with local media streams.
