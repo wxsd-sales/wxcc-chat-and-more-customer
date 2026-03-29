@@ -190,6 +190,7 @@ async function startVideo(webex) {
       console.log("[WxCC]: media:stopped", media.type);
       if (media.type === "remoteVideo") {
         document.getElementById("remote-view-video").srcObject = null;
+        resetVideoUI();
       } else if (media.type === "remoteAudio") {
         document.getElementById("remote-view-audio").srcObject = null;
       }
@@ -223,12 +224,16 @@ async function startVideo(webex) {
       } catch (e) {
         console.error("[WxCC]: meeting leave error", e);
       }
+      resetVideoUI();
+    });
+
+    function resetVideoUI() {
       endBtn.style.display = "none";
       document.getElementById("video-container").style.display = "none";
       document.getElementById("hero-image").style.display = "";
       cameraBtn.style.opacity = "0.4";
       micBtn.style.opacity = "0.4";
-    });
+    }
 
     cameraBtn.style.opacity = "1";
     micBtn.style.opacity = "1";
