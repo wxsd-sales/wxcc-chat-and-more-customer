@@ -217,8 +217,12 @@ async function startVideo(webex) {
 
     endBtn.style.display = "";
     endBtn.addEventListener("click", async () => {
-      await meeting.leave();
-      console.log("[WxCC]: meeting left");
+      try {
+        await meeting.leave();
+        console.log("[WxCC]: meeting left");
+      } catch (e) {
+        console.error("[WxCC]: meeting leave error", e);
+      }
       endBtn.style.display = "none";
       document.getElementById("video-container").style.display = "none";
       document.getElementById("hero-image").style.display = "";
