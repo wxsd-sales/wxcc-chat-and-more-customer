@@ -195,13 +195,10 @@ async function startVideo(webex) {
 
     meeting.on("media:stopped", (media) => {
       console.log("[WxCC]: media:stopped", media.type);
-      if (media.type === "remoteVideo") {
-        document.getElementById("remote-view-video").srcObject = null;
-        resetVideoUI();
-      } else if (media.type === "remoteAudio") {
+      if (media.type === "remoteAudio") {
         document.getElementById("remote-view-audio").srcObject = null;
       } else if (media.type === "remoteShare") {
-        // Screen share stopped — show remote video again
+        // Screen share stopped — restore remote video
         document.getElementById("remote-share-video").srcObject = null;
         document.getElementById("remote-share-video").style.display = "none";
         document.getElementById("remote-view-video").style.display = "block";
