@@ -195,9 +195,11 @@ async function startVideo(webex) {
       }
     });
 
-    meeting.on("meeting:ended", () => {
-      console.log("[WxCC]: meeting ended by host");
-      resetVideoUI();
+    meeting.on("meeting:stateChange", (payload) => {
+      console.log("[WxCC]: meeting state change", payload);
+      if (payload.currentState === "ENDED") {
+        resetVideoUI();
+      }
     });
 
     // STEP-4d: Join the meeting with local media streams.
