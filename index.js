@@ -190,15 +190,9 @@ async function startVideo(webex) {
       console.log("[WxCC]: media:stopped", media.type);
       if (media.type === "remoteVideo") {
         document.getElementById("remote-view-video").srcObject = null;
+        resetVideoUI();
       } else if (media.type === "remoteAudio") {
         document.getElementById("remote-view-audio").srcObject = null;
-      }
-    });
-
-    meeting.on("meeting:stateChange", (payload) => {
-      console.log("[WxCC]: meeting state change", payload);
-      if (payload.currentState === "ENDED") {
-        resetVideoUI();
       }
     });
 
