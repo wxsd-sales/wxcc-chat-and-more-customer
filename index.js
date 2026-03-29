@@ -195,6 +195,11 @@ async function startVideo(webex) {
       }
     });
 
+    meeting.on("meeting:ended", () => {
+      console.log("[WxCC]: meeting ended by host");
+      resetVideoUI();
+    });
+
     // STEP-4d: Join the meeting with local media streams.
     await meeting.joinWithMedia({
       mediaOptions: {
@@ -223,12 +228,16 @@ async function startVideo(webex) {
       } catch (e) {
         console.error("[WxCC]: meeting leave error", e);
       }
+      resetVideoUI();
+    });
+
+    function resetVideoUI() {
       endBtn.style.display = "none";
       document.getElementById("video-container").style.display = "none";
       document.getElementById("hero-image").style.display = "";
       cameraBtn.style.opacity = "0.4";
       micBtn.style.opacity = "0.4";
-    });
+    }
 
     cameraBtn.style.opacity = "1";
     micBtn.style.opacity = "1";
