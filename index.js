@@ -185,8 +185,9 @@ async function startVideo(webex) {
       } else if (media.type === "remoteAudio") {
         document.getElementById("remote-view-audio").srcObject = media.stream;
       } else if (media.type === "remoteShare") {
-        console.log("[WxCC]: remoteShare media object:", media);
-        console.log("[WxCC]: remoteShare stream object:", media.stream);
+        // Just assign the stream — show/hide is handled by startedSharingRemote/stoppedSharingRemote
+        document.getElementById("remote-share-video").srcObject = media.stream;
+        console.log("[WxCC]: remoteShare stream assigned");
       }
     });
 
@@ -195,12 +196,24 @@ async function startVideo(webex) {
       if (media.type === "remoteAudio") {
         document.getElementById("remote-view-audio").srcObject = null;
       } else if (media.type === "remoteShare") {
-        // Screen share stopped — restore remote video
         document.getElementById("remote-share-video").srcObject = null;
-        document.getElementById("remote-share-video").style.display = "none";
-        document.getElementById("remote-view-video").style.display = "block";
-        console.log("[WxCC]: screen share stopped on customer side");
       }
+    });
+
+    meeting.on("meeting:startedSharingRemote", () => {
+      console.log("[WxCC]: screen share started on customer side");
+      document.getElementById("remote-share-video").style.display = "block";
+      document.getElementById("remote-view-video").style.display = "none";
+    });
+
+    meeting.on("meeting:stoppedSharingRemote", () => {
+      console.log("[WxCC]: screen share stopped on customer side");
+      const shareEl = document.getElementById("remote-share-video");
+      const temp = shareEl.srcObject;
+      shareEl.srcObject = null;
+      shareEl.srcObject = temp;
+      shareEl.style.display = "none";
+      document.getElementById("remote-view-video").style.display = "block";
     });
 
     // STEP-4d: Join the meeting with local media streams.
