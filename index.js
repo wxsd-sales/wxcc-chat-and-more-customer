@@ -184,6 +184,12 @@ async function startVideo(webex) {
         document.getElementById("hero-image").style.display = "none";
       } else if (media.type === "remoteAudio") {
         document.getElementById("remote-view-audio").srcObject = media.stream;
+      } else if (media.type === "remoteShare") {
+        // Screen share started — show share video, hide remote video
+        document.getElementById("remote-share-video").srcObject = media.stream;
+        document.getElementById("remote-share-video").style.display = "block";
+        document.getElementById("remote-view-video").style.display = "none";
+        console.log("[WxCC]: screen share started on customer side");
       }
     });
 
@@ -194,6 +200,12 @@ async function startVideo(webex) {
         resetVideoUI();
       } else if (media.type === "remoteAudio") {
         document.getElementById("remote-view-audio").srcObject = null;
+      } else if (media.type === "remoteShare") {
+        // Screen share stopped — show remote video again
+        document.getElementById("remote-share-video").srcObject = null;
+        document.getElementById("remote-share-video").style.display = "none";
+        document.getElementById("remote-view-video").style.display = "block";
+        console.log("[WxCC]: screen share stopped on customer side");
       }
     });
 
