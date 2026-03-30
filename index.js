@@ -5,7 +5,8 @@ const WXCC_HOOK_URL = "https://hooks.us.webexconnect.io/events/HILBRZW77M";
 const VIDEO_DESTINATION = new URLSearchParams(window.location.search).get("destination");
 
 let toPersonEmail = null; // set when first message is received from agent
-const INAPP_APP_ID = "VI24093513";
+// const INAPP_APP_ID = "VI24093513";
+const INAPP_APP_ID = "DA05221332";
 const INAPP_USER_ID = "6806ea7s-a04e-4fdb-9d86-0b33626f3577";
 
 const chatHistory = document.getElementById("chat-history");
