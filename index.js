@@ -193,12 +193,19 @@ async function startVideo(webex) {
       }
     });
 
+    let stoppedStreams = new Set();
     meeting.on("media:stopped", (media) => {
       console.log("[WxCC]: media:stopped", media.type);
+      stoppedStreams.add(media.type);
       if (media.type === "remoteAudio") {
         document.getElementById("remote-view-audio").srcObject = null;
       } else if (media.type === "remoteShare") {
         document.getElementById("remote-share-video").srcObject = null;
+      }
+      // If all remote streams stopped, the meeting ended
+      if (stoppedStreams.has("remoteVideo") && stoppedStreams.has("remoteAudio")) {
+        console.log("[WxCC]: all remote streams stopped, meeting ended");
+        resetVideoUI();
       }
     });
 
