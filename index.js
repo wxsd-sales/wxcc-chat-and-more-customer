@@ -5,6 +5,7 @@ const WXCC_HOOK_URL = "https://hooks.us.webexconnect.io/events/HILBRZW77M";
 const VIDEO_DESTINATION = new URLSearchParams(window.location.search).get("destination");
 
 let toPersonEmail = null; // set when first message is received from agent
+let VIDEO_DESTINATION_OVERRIDE = null; // set when agent sends /meetinglink
 // const INAPP_APP_ID = "VI24093513";
 const INAPP_APP_ID = "DA05221332";
 const INAPP_USER_ID = "6806ea7s-a04e-4fdb-9d86-0b33626f3577";
@@ -143,6 +144,12 @@ async function initMessaging(webex) {
       }
 
       const text = event.data.text;
+      if (text && text.trim().startsWith("/meetinglink ")) {
+        const link = text.trim().substring("/meetinglink ".length);
+        console.log("[WxCC]: meeting link received", link);
+        VIDEO_DESTINATION_OVERRIDE = link;
+        return;
+      }
       if (text && text.trim() === "/startvideo") {
         console.log("[WxCC]: /startvideo received, starting video...");
         startVideo(webex);
@@ -164,7 +171,10 @@ async function startVideo(webex) {
     setStatus("Starting video...");
 
     // STEP-4a: Create the meeting handle for the video destination.
-    const meeting = await webex.meetings.create(VIDEO_DESTINATION);
+    // Use the link sent by the agent if available, otherwise fall back to URL param.
+    const destination = VIDEO_DESTINATION_OVERRIDE || VIDEO_DESTINATION;
+    console.log("[WxCC]: joining meeting at", destination);
+    const meeting = await webex.meetings.create(destination);
     console.log("[WxCC]: meeting created", meeting);
 
     // STEP-4b: Create local camera and microphone streams.
