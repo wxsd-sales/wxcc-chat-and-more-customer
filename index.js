@@ -42,16 +42,53 @@ function setStatus(text) {
 // customerEmail — static email for identification
 // customerId — the Webex person ID (me.id), used by the agent widget to send chat messages
 async function requestAgent(customerName, customerId) {
-  const response = await fetch(WXCC_HOOK_URL, {
+  // -- OLD: WxCC hook --
+  // const response = await fetch(WXCC_HOOK_URL, {
+  //   method: "POST",
+  //   headers: { "Content-Type": "application/json" },
+  //   body: JSON.stringify({
+  //     customerName,
+  //     customerEmail: CUSTOMER_EMAIL,
+  //     customerId,
+  //     videoCallDestination: VIDEO_DESTINATION,
+  //     "inappmessaging.appId": INAPP_APP_ID,
+  //     "inappmessaging.userId": INAPP_USER_ID,
+  //   }),
+  // });
+  // console.log("[WxCC]: agent request sent, status:", response.status);
+
+  // -- NEW: WxCC routing API --
+  const response = await fetch("https://routing-api.intgus1.ciscoccservice.com/v2/tasks", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      customerName,
-      customerEmail: CUSTOMER_EMAIL,
-      customerId,
-      videoCallDestination: VIDEO_DESTINATION,
-      "inappmessaging.appId": INAPP_APP_ID,
-      "inappmessaging.userId": INAPP_USER_ID,
+      orgId: "56bbfaf9-5767-4971-8e1e-b5b737dfc08c",
+      origin: {
+        id: "vvazquez@cisco.com",
+        name: "Name in Origin",
+      },
+      destination: {
+        id: "UALVIDEO1",
+        type: "DN",
+      },
+      mediaType: "workItem",
+      channel: "Video Chat",
+      direction: {
+        type: "INBOUND",
+      },
+      mediaParams: {
+        type: "work-item-form",
+        message: {
+          aliasId: "form-001",
+          workItemData: {
+            customerName,
+            videoCallDestination: VIDEO_DESTINATION,
+            customerEmail: "vvazquez@cisco.com",
+            customerId,
+          },
+          timestamp: Date.now(),
+        },
+      },
     }),
   });
   console.log("[WxCC]: agent request sent, status:", response.status);
