@@ -1,13 +1,15 @@
 // const BACKEND_URL = "http://localhost:3000";
-const BACKEND_URL = "https://258d-2a0c-5a84-e609-a00-84d4-e94e-1551-7d59.ngrok-free.app";
+const BACKEND_URL = "https://be-guest-and-meeting-creation-production.up.railway.app";
 // const WXCC_HOOK_URL = "https://hooks.us.webexconnect.io/events/12IOCZHHTT";
 const WXCC_HOOK_URL = "https://hooks.us.webexconnect.io/events/HILBRZW77M";
 const VIDEO_DESTINATION = new URLSearchParams(window.location.search).get("destination");
 
 let toPersonEmail = null; // set when first message is received from agent
+let VIDEO_DESTINATION_OVERRIDE = null; // set when agent sends /meetinglink
 // const INAPP_APP_ID = "VI24093513";
 const INAPP_APP_ID = "DA05221332";
 const INAPP_USER_ID = "6806ea7s-a04e-4fdb-9d86-0b33626f3577";
+const CUSTOMER_EMAIL = "vvazquez@cisco.com";
 
 const chatHistory = document.getElementById("chat-history");
 const chatInput = document.getElementById("chat-input");
@@ -36,13 +38,17 @@ function setStatus(text) {
 
 // STEP-0: Notify WxCC to assign an agent for this customer session.
 // Called before SDK init — no auth required.
-async function requestAgent(customerName, customerEmail) {
+// Posts customer info to WxCC to request an agent.
+// customerEmail — static email for identification
+// customerId — the Webex person ID (me.id), used by the agent widget to send chat messages
+async function requestAgent(customerName, customerId) {
   const response = await fetch(WXCC_HOOK_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       customerName,
-      customerEmail,
+      customerEmail: CUSTOMER_EMAIL,
+      customerId,
       videoCallDestination: VIDEO_DESTINATION,
       "inappmessaging.appId": INAPP_APP_ID,
       "inappmessaging.userId": INAPP_USER_ID,
@@ -120,8 +126,8 @@ async function initMessaging(webex) {
     const me = await webex.people.get("me");
     console.log("[WxCC]: logged in as", me.emails[0]);
 
-    // STEP-0: Now that we have the customer's identity, request an agent from WxCC.
-    // We send me.id in the customerEmail field so the widget can use it as toPersonId.
+    // STEP-0: Now that we have the customer's Webex person ID, request an agent from WxCC.
+    // me.id is sent as customerId so the agent widget can use it to send chat messages directly.
     const customerName = new URLSearchParams(window.location.search).get("name") || "Guest";
     await requestAgent(customerName, me.id).catch((err) => console.error("[WxCC]: agent request error", err));
 
@@ -138,6 +144,12 @@ async function initMessaging(webex) {
       }
 
       const text = event.data.text;
+      if (text && text.trim().startsWith("/meetinglink ")) {
+        const link = text.trim().substring("/meetinglink ".length);
+        console.log("[WxCC]: meeting link received", link);
+        VIDEO_DESTINATION_OVERRIDE = link;
+        return;
+      }
       if (text && text.trim() === "/startvideo") {
         console.log("[WxCC]: /startvideo received, starting video...");
         startVideo(webex);
@@ -159,7 +171,10 @@ async function startVideo(webex) {
     setStatus("Starting video...");
 
     // STEP-4a: Create the meeting handle for the video destination.
-    const meeting = await webex.meetings.create(VIDEO_DESTINATION);
+    // Use the link sent by the agent if available, otherwise fall back to URL param.
+    const destination = VIDEO_DESTINATION_OVERRIDE || VIDEO_DESTINATION;
+    console.log("[WxCC]: joining meeting at", destination);
+    const meeting = await webex.meetings.create(destination);
     console.log("[WxCC]: meeting created", meeting);
 
     // STEP-4b: Create local camera and microphone streams.
