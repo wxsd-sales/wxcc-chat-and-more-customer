@@ -57,38 +57,14 @@ async function requestAgent(customerName, customerId) {
   // });
   // console.log("[WxCC]: agent request sent, status:", response.status);
 
-  // -- NEW: WxCC routing API --
-  const response = await fetch("https://routing-api.intgus1.ciscoccservice.com/v2/tasks", {
+  // -- NEW: proxy through BE to avoid CORS --
+  const response = await fetch(`${BACKEND_URL}/api/request-agent`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      orgId: "56bbfaf9-5767-4971-8e1e-b5b737dfc08c",
-      origin: {
-        id: "vvazquez@cisco.com",
-        name: "Name in Origin",
-      },
-      destination: {
-        id: "UALVIDEO1",
-        type: "DN",
-      },
-      mediaType: "workItem",
-      channel: "Video Chat",
-      direction: {
-        type: "INBOUND",
-      },
-      mediaParams: {
-        type: "work-item-form",
-        message: {
-          aliasId: "form-001",
-          workItemData: {
-            customerName,
-            videoCallDestination: VIDEO_DESTINATION,
-            customerEmail: "vvazquez@cisco.com",
-            customerId,
-          },
-          timestamp: Date.now(),
-        },
-      },
+      customerName,
+      customerEmail: CUSTOMER_EMAIL,
+      customerId,
     }),
   });
   console.log("[WxCC]: agent request sent, status:", response.status);
