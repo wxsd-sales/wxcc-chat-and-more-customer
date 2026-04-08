@@ -58,6 +58,7 @@ async function requestAgent(customerName, customerId) {
   // console.log("[WxCC]: agent request sent, status:", response.status);
 
   // -- NEW: proxy through BE to avoid CORS --
+  const mediaType = "video";
   const response = await fetch(`${BACKEND_URL}/api/request-agent`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -65,9 +66,10 @@ async function requestAgent(customerName, customerId) {
       customerName,
       customerEmail: CUSTOMER_EMAIL,
       customerId,
+      mediaType
     }),
   });
-  console.log("[WxCC]: agent request sent, status:", response.status);
+  console.log(`[WxCC]: agent request for ${mediaType} sent, status:", ${response.status}`);
 }
 
 // Returns token from URL param if present, otherwise fetches from backend.
