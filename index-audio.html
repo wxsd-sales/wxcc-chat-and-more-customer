@@ -101,6 +101,28 @@
         gap: 16px;
       }
 
+      /* ── Concierge message ── */
+      #concierge-message {
+        padding: 14px 16px;
+        border: 1px solid #e6e8e8;
+        border-radius: 12px;
+        background-color: #fafafa;
+      }
+
+      #concierge-sender {
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: #1a56a0;
+        margin-bottom: 6px;
+      }
+
+      #concierge-text {
+        font-size: 0.85rem;
+        color: #555;
+        line-height: 1.5;
+        font-style: italic;
+      }
+
       /* ── Status message ── */
       #status {
         font-size: 0.75rem;
@@ -138,6 +160,10 @@
       />
 
       <div id="content">
+        <div id="concierge-message">
+          <p id="concierge-sender">Concierge</p>
+          <p id="concierge-text">An Agent will be with you soon; please check back on this browser for assistance. Agent On Demand only accepts payments from authorized credit cards verified during flight check-in.</p>
+        </div>
         <p id="status"></p>
       </div>
     </div>
