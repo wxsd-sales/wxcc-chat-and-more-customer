@@ -65,9 +65,10 @@ async function requestAgent(customerName, customerId) {
       customerName,
       customerEmail: CUSTOMER_EMAIL,
       customerId,
+      mediaType: "video",
     }),
   });
-  console.log("[WxCC]: agent request sent, status:", response.status);
+  console.log(`[WxCC]: agent request for ${mediaType} sent, status:", ${response.status}`);
 }
 
 // Returns token from URL param if present, otherwise fetches from backend.

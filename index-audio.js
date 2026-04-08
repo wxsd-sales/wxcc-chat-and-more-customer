@@ -21,6 +21,7 @@ async function requestAgent(customerName, customerId) {
       customerName,
       customerEmail: CUSTOMER_EMAIL,
       customerId,
+      mediaType: "audio",
     }),
   });
   console.log("[WxCC]: agent request sent, status:", response.status);
@@ -93,8 +94,8 @@ async function initMessaging(webex) {
         VIDEO_DESTINATION_OVERRIDE = link;
         return;
       }
-      if (text && text.trim() === "/startvideo") {
-        console.log("[WxCC]: /startvideo received, starting audio call...");
+      if (text && text.trim() === "/startaudio") {
+        console.log("[WxCC]: /startaudio received, starting audio call...");
         startAudio(webex);
         return;
       }
