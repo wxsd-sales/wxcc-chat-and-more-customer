@@ -13,6 +13,7 @@ function setStatus(text) {
 
 // STEP-0: Notify WxCC to assign an agent for this customer session.
 // Proxied through the BE to avoid CORS issues with the routing API.
+const mediaType = "audio";
 async function requestAgent(customerName, customerId) {
   const response = await fetch(`${BACKEND_URL}/api/request-agent`, {
     method: "POST",
@@ -21,10 +22,11 @@ async function requestAgent(customerName, customerId) {
       customerName,
       customerEmail: CUSTOMER_EMAIL,
       customerId,
-      mediaType: "audio",
+      mediaType
     }),
   });
-  console.log("[WxCC]: agent request sent, status:", response.status);
+  console.log(`[WxCC]: agent request for ${mediaType} sent, status:", ${response.status}`);
+  
 }
 
 // Returns token from URL param if present, otherwise fetches from backend.

@@ -58,6 +58,7 @@ async function requestAgent(customerName, customerId) {
   // console.log("[WxCC]: agent request sent, status:", response.status);
 
   // -- NEW: proxy through BE to avoid CORS --
+  const mediaType = "video";
   const response = await fetch(`${BACKEND_URL}/api/request-agent`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -65,7 +66,7 @@ async function requestAgent(customerName, customerId) {
       customerName,
       customerEmail: CUSTOMER_EMAIL,
       customerId,
-      mediaType: "video",
+      mediaType
     }),
   });
   console.log(`[WxCC]: agent request for ${mediaType} sent, status:", ${response.status}`);
