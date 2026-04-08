@@ -43,22 +43,24 @@ function setStatus(text) {
 // customerId — the Webex person ID (me.id), used by the agent widget to send chat messages
 async function requestAgent(customerName, customerId) {
   // -- OLD: WxCC hook --
-  // const response = await fetch(WXCC_HOOK_URL, {
-  //   method: "POST",
-  //   headers: { "Content-Type": "application/json" },
-  //   body: JSON.stringify({
-  //     customerName,
-  //     customerEmail: CUSTOMER_EMAIL,
-  //     customerId,
-  //     videoCallDestination: VIDEO_DESTINATION,
-  //     "inappmessaging.appId": INAPP_APP_ID,
-  //     "inappmessaging.userId": INAPP_USER_ID,
-  //   }),
-  // });
+  const mediaType = "video";
+  const response = await fetch(WXCC_HOOK_URL, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    customerName,
+    customerEmail: CUSTOMER_EMAIL,
+    customerId,
+    videoCallDestination: VIDEO_DESTINATION,
+    "inappmessaging.appId": INAPP_APP_ID,
+    "inappmessaging.userId": INAPP_USER_ID,
+    mediaType
+    }),
+  });
   // console.log("[WxCC]: agent request sent, status:", response.status);
 
   // -- NEW: proxy through BE to avoid CORS --
-  const mediaType = "video";
+/*   const mediaType = "video";
   const response = await fetch(`${BACKEND_URL}/api/request-agent`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -68,7 +70,7 @@ async function requestAgent(customerName, customerId) {
       customerId,
       mediaType
     }),
-  });
+  }); */
   console.log(`[WxCC]: agent request for ${mediaType} sent, status:", ${response.status}`);
 }
 
