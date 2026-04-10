@@ -13,26 +13,30 @@ function setStatus(text) {
 
 // STEP-0: Notify WxCC to assign an agent for this customer session.
 // Proxied through the BE to avoid CORS issues with the routing API.
-const mediaType = "audio";
 
-// Old Live Chat based option
+
+
+
+
+
+async function requestAgent(customerName, customerId) {
+  const mediaType = "audio";
+  // Old Live Chat based option
   const response = await fetch(WXCC_HOOK_URL, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    customerName,
-    customerEmail: CUSTOMER_EMAIL,
-    customerId,
-    videoCallDestination: VIDEO_DESTINATION,
-    "inappmessaging.appId": INAPP_APP_ID,
-    "inappmessaging.userId": INAPP_USER_ID,
-    mediaType
-    }),
-  });
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      customerName,
+      customerEmail: CUSTOMER_EMAIL,
+      customerId,
+      videoCallDestination: VIDEO_DESTINATION,
+      "inappmessaging.appId": INAPP_APP_ID,
+      "inappmessaging.userId": INAPP_USER_ID,
+      mediaType
+      }),
+    });
 
-
-// Option for Task Routing API using BW
-/* async function requestAgent(customerName, customerId) {
+  /*
   const response = await fetch(`${BACKEND_URL}/api/request-agent`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -42,9 +46,10 @@ const mediaType = "audio";
       customerId,
       mediaType
     }),
-  });
+  });*/
+
   console.log(`[WxCC]: agent request for ${mediaType} sent, status:", ${response.status}`);
-} */
+} 
 
 // Returns token from URL param if present, otherwise fetches from backend.
 async function getAccessToken() {
