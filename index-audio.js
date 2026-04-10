@@ -2,6 +2,8 @@
 const BACKEND_URL = "https://be-guest-and-meeting-creation-production.up.railway.app";
 const VIDEO_DESTINATION = new URLSearchParams(window.location.search).get("destination");
 const CUSTOMER_EMAIL = "vvazquez@cisco.com";
+const WXCC_HOOK_URL = "https://hooks.us.webexconnect.io/events/HILBRZW77M";
+
 
 let VIDEO_DESTINATION_OVERRIDE = null; // set when agent sends /meetinglink
 
