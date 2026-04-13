@@ -17,11 +17,7 @@ function setStatus(text) {
 // STEP-0: Notify WxCC to assign an agent for this customer session.
 // Proxied through the BE to avoid CORS issues with the routing API.
 
-
-
-
-
-
+/*
 async function requestAgent(customerName, customerId) {
   const mediaType = "audio";
   // Old Live Chat based option
@@ -37,9 +33,9 @@ async function requestAgent(customerName, customerId) {
       "inappmessaging.userId": INAPP_USER_ID,
       mediaType
       }),
-    });
+    });*/
 
-  /*
+  
   const response = await fetch(`${BACKEND_URL}/api/request-agent`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -49,7 +45,7 @@ async function requestAgent(customerName, customerId) {
       customerId,
       mediaType
     }),
-  });*/
+  });
 
   console.log(`[WxCC]: agent request for ${mediaType} sent, status:", ${response.status}`);
 } 
