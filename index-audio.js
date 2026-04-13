@@ -2,6 +2,9 @@
 const BACKEND_URL = "https://be-guest-and-meeting-creation-production.up.railway.app";
 const VIDEO_DESTINATION = new URLSearchParams(window.location.search).get("destination");
 const CUSTOMER_EMAIL = "vvazquez@cisco.com";
+const WXCC_HOOK_URL = "https://hooks.us.webexconnect.io/events/HILBRZW77M";
+const INAPP_APP_ID = "DA05221332";
+const INAPP_USER_ID = "6806ea7s-a04e-4fdb-9d86-0b33626f3577";
 
 let VIDEO_DESTINATION_OVERRIDE = null; // set when agent sends /meetinglink
 
@@ -13,8 +16,26 @@ function setStatus(text) {
 
 // STEP-0: Notify WxCC to assign an agent for this customer session.
 // Proxied through the BE to avoid CORS issues with the routing API.
-const mediaType = "audio";
+
+/*
 async function requestAgent(customerName, customerId) {
+  const mediaType = "audio";
+  // Old Live Chat based option
+  const response = await fetch(WXCC_HOOK_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      customerName,
+      customerEmail: CUSTOMER_EMAIL,
+      customerId,
+      videoCallDestination: VIDEO_DESTINATION,
+      "inappmessaging.appId": INAPP_APP_ID,
+      "inappmessaging.userId": INAPP_USER_ID,
+      mediaType
+      }),
+    });*/
+
+  
   const response = await fetch(`${BACKEND_URL}/api/request-agent`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -25,9 +46,9 @@ async function requestAgent(customerName, customerId) {
       mediaType
     }),
   });
+
   console.log(`[WxCC]: agent request for ${mediaType} sent, status:", ${response.status}`);
-  
-}
+} 
 
 // Returns token from URL param if present, otherwise fetches from backend.
 async function getAccessToken() {
