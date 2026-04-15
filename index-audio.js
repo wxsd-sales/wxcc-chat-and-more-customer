@@ -17,9 +17,11 @@ function setStatus(text) {
 // STEP-0: Notify WxCC to assign an agent for this customer session.
 // Proxied through the BE to avoid CORS issues with the routing API.
 
-/*
+
 async function requestAgent(customerName, customerId) {
   const mediaType = "audio";
+  
+  /*
   // Old Live Chat based option
   const response = await fetch(WXCC_HOOK_URL, {
     method: "POST",
