@@ -73,7 +73,7 @@ async function requestAgent(customerName, customerId) {
       mediaType
     }),
   }); 
-  console.log(`[WxCC]: agent request for ${mediaType} sent and ${customerEmail}, status:", ${response.status}`);
+  console.log(`[WxCC]: agent request for ${mediaType} sent and ${CUSTOMER_EMAIL}, status:", ${response.status}`);
 }
 
 // Returns token from URL param if present, otherwise fetches from backend.
