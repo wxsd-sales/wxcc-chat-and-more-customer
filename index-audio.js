@@ -1,7 +1,7 @@
 // const BACKEND_URL = "http://localhost:3000";
 const BACKEND_URL = "https://be-guest-and-meeting-creation-production.up.railway.app";
 const VIDEO_DESTINATION = new URLSearchParams(window.location.search).get("destination");
-const CUSTOMER_EMAIL = "vvazquez@cisco.com";
+const CUSTOMER_EMAIL = "vvazquez@wxsd.us";
 const WXCC_HOOK_URL = "https://hooks.us.webexconnect.io/events/HILBRZW77M";
 const INAPP_APP_ID = "DA05221332";
 const INAPP_USER_ID = "6806ea7s-a04e-4fdb-9d86-0b33626f3577";
@@ -49,7 +49,7 @@ async function requestAgent(customerName, customerId) {
     }),
   });
 
-  console.log(`[WxCC]: agent request to ${BACKEND_URL} for ${mediaType} sent, status:", ${response.status}`);
+  console.log(`[WxCC]: agent request to ${BACKEND_URL} for ${mediaType} and ${customerEmail} sent, status:", ${response.status}`);
 } 
 
 // Returns token from URL param if present, otherwise fetches from backend.

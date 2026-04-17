@@ -9,7 +9,7 @@ let VIDEO_DESTINATION_OVERRIDE = null; // set when agent sends /meetinglink
 // const INAPP_APP_ID = "VI24093513";
 const INAPP_APP_ID = "DA05221332";
 const INAPP_USER_ID = "6806ea7s-a04e-4fdb-9d86-0b33626f3577";
-const CUSTOMER_EMAIL = "vvazquez@cisco.com";
+const CUSTOMER_EMAIL = "vvazquez@wxsd.us";
 
 const chatHistory = document.getElementById("chat-history");
 const chatInput = document.getElementById("chat-input");
@@ -73,7 +73,7 @@ async function requestAgent(customerName, customerId) {
       mediaType
     }),
   }); 
-  console.log(`[WxCC]: agent request for ${mediaType} sent, status:", ${response.status}`);
+  console.log(`[WxCC]: agent request for ${mediaType} sent and ${CUSTOMER_EMAIL}, status:", ${response.status}`);
 }
 
 // Returns token from URL param if present, otherwise fetches from backend.
