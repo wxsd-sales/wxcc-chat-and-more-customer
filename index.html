@@ -19,6 +19,7 @@
         display: flex;
         flex-direction: column;
         align-items: center;
+        overflow-x: hidden;
       }
 
       #app {
@@ -28,6 +29,7 @@
         background-color: #fff;
         display: flex;
         flex-direction: column;
+        overflow-x: hidden;
       }
 
       /* ── Top header bar ── */
@@ -57,6 +59,19 @@
           max-width: 80px;
         }
         #header-title {
+          font-size: 0.75rem;
+        }
+        #chat-input-bar {
+          gap: 4px;
+          padding: 8px 8px;
+        }
+        #chat-input {
+          padding: 6px 10px;
+          font-size: 0.75rem;
+          min-width: 0;
+        }
+        #chat-send {
+          padding: 6px 10px;
           font-size: 0.75rem;
         }
       }
