@@ -7,6 +7,7 @@ const INAPP_APP_ID = "DA05221332";
 const INAPP_USER_ID = "6806ea7s-a04e-4fdb-9d86-0b33626f3577";
 
 let VIDEO_DESTINATION_OVERRIDE = null; // set when agent sends /meetinglink
+let toPersonEmail = null; // set when first message is received from agent
 
 const statusEl = document.getElementById("status");
 
@@ -112,6 +113,11 @@ async function initMessaging(webex) {
       console.log("[WxCC]: incoming message", event);
       if (event.data.personEmail === me.emails[0]) return;
 
+      if (!toPersonEmail) {
+        toPersonEmail = event.data.personEmail;
+        console.log("[WxCC]: agent email set to", toPersonEmail);
+      }
+
       const text = event.data.text;
       if (text && text.trim().startsWith("/meetinglink ")) {
         const link = text.trim().substring("/meetinglink ".length);
@@ -194,6 +200,14 @@ async function startAudio(webex) {
 
     endBtn.style.display = "";
     endBtn.addEventListener("click", async () => {
+      if (toPersonEmail) {
+        try {
+          await webex.messages.create({ toPersonEmail, text: "Customer ended the meeting" });
+          console.log("[WxCC]: end notification sent to agent");
+        } catch (e) {
+          console.error("[WxCC]: failed to send end notification", e);
+        }
+      }
       try {
         await meeting.leave();
       } catch (e) {
