@@ -161,15 +161,14 @@ async function startAudio(webex) {
       }
     });
 
-    let stoppedStreams = new Set();
+    let meetingEnded = false;
     meeting.on("media:stopped", (media) => {
       console.log("[WxCC]: media:stopped", media.type);
-      stoppedStreams.add(media.type);
       if (media.type === "remoteAudio") {
         document.getElementById("remote-view-audio").srcObject = null;
       }
-      // Audio-only: meeting ended when remoteAudio stops
-      if (stoppedStreams.has("remoteAudio")) {
+      if (!meetingEnded && media.type === "remoteAudio") {
+        meetingEnded = true;
         console.log("[WxCC]: remote audio stopped, call ended");
         resetCallUI();
       }
@@ -197,10 +196,10 @@ async function startAudio(webex) {
     endBtn.addEventListener("click", async () => {
       try {
         await meeting.leave();
-        console.log("[WxCC]: meeting left");
       } catch (e) {
-        console.error("[WxCC]: meeting leave error", e);
+        // SDK may throw getCurUserType internally but leave still succeeds
       }
+      console.log("[WxCC]: meeting left");
       resetCallUI();
     });
 

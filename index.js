@@ -228,6 +228,7 @@ async function startVideo(webex) {
     });
 
     let stoppedStreams = new Set();
+    let meetingEnded = false;
     meeting.on("media:stopped", (media) => {
       console.log("[WxCC]: media:stopped", media.type);
       stoppedStreams.add(media.type);
@@ -236,9 +237,9 @@ async function startVideo(webex) {
       } else if (media.type === "remoteShare") {
         document.getElementById("remote-share-video").srcObject = null;
       }
-      // If all remote streams stopped, the meeting ended
-      if (stoppedStreams.has("remoteVideo") && stoppedStreams.has("remoteAudio")) {
-        console.log("[WxCC]: all remote streams stopped, meeting ended");
+      if (!meetingEnded && stoppedStreams.has("remoteAudio")) {
+        meetingEnded = true;
+        console.log("[WxCC]: remote audio stopped, meeting ended");
         resetVideoUI();
       }
     });
@@ -283,10 +284,10 @@ async function startVideo(webex) {
     endBtn.addEventListener("click", async () => {
       try {
         await meeting.leave();
-        console.log("[WxCC]: meeting left");
       } catch (e) {
-        console.error("[WxCC]: meeting leave error", e);
+        // SDK may throw getCurUserType internally but leave still succeeds
       }
+      console.log("[WxCC]: meeting left");
       resetVideoUI();
     });
 
