@@ -282,6 +282,14 @@ async function startVideo(webex) {
 
     endBtn.style.display = "";
     endBtn.addEventListener("click", async () => {
+      if (toPersonEmail) {
+        try {
+          await webex.messages.create({ toPersonEmail, text: "customer Ended the meeting" });
+          console.log("[WxCC]: end notification sent to agent");
+        } catch (e) {
+          console.error("[WxCC]: failed to send end notification", e);
+        }
+      }
       try {
         await meeting.leave();
       } catch (e) {
