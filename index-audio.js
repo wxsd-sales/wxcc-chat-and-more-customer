@@ -7,7 +7,8 @@ const INAPP_APP_ID = "DA05221332";
 const INAPP_USER_ID = "6806ea7s-a04e-4fdb-9d86-0b33626f3577";
 
 let VIDEO_DESTINATION_OVERRIDE = null; // set when agent sends /meetinglink
-let toPersonEmail = null; // set when first message is received from agent
+// Needed to send messages to guest users: use personId instead of personEmail
+let toPersonId = null; // set when first message is received from agent
 
 const statusEl = document.getElementById("status");
 
@@ -113,9 +114,9 @@ async function initMessaging(webex) {
       console.log("[WxCC]: incoming message", event);
       if (event.data.personEmail === me.emails[0]) return;
 
-      if (!toPersonEmail) {
-        toPersonEmail = event.data.personEmail;
-        console.log("[WxCC]: agent email set to", toPersonEmail);
+      if (!toPersonId) {
+        toPersonId = event.data.personId; // Needed to send messages to guest users: personId works for both regular and guest accounts
+        console.log("[WxCC]: agent personId set to", toPersonId);
       }
 
       const text = event.data.text;
@@ -200,9 +201,9 @@ async function startAudio(webex) {
 
     endBtn.style.display = "";
     endBtn.addEventListener("click", async () => {
-      if (toPersonEmail) {
+      if (toPersonId) {
         try {
-          await webex.messages.create({ toPersonEmail, text: "Customer ended the meeting" });
+          await webex.messages.create({ toPersonId, text: "Customer ended the meeting" }); // Needed to send messages to guest users
           console.log("[WxCC]: end notification sent to agent");
         } catch (e) {
           console.error("[WxCC]: failed to send end notification", e);

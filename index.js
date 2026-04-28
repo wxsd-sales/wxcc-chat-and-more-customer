@@ -4,7 +4,8 @@ const BACKEND_URL = "https://be-guest-and-meeting-creation-production.up.railway
 const WXCC_HOOK_URL = "https://hooks.us.webexconnect.io/events/HILBRZW77M";
 const VIDEO_DESTINATION = new URLSearchParams(window.location.search).get("destination");
 
-let toPersonEmail = null; // set when first message is received from agent
+// Needed to send messages to guest users: use personId instead of personEmail
+let toPersonId = null; // set when first message is received from agent
 let VIDEO_DESTINATION_OVERRIDE = null; // set when agent sends /meetinglink
 // const INAPP_APP_ID = "VI24093513";
 const INAPP_APP_ID = "DA05221332";
@@ -155,9 +156,9 @@ async function initMessaging(webex) {
       if (event.data.personEmail === me.emails[0]) return;
 
       // Capture agent email from first incoming message and enable send button
-      if (!toPersonEmail) {
-        toPersonEmail = event.data.personEmail;
-        console.log("[WxCC]: agent email set to", toPersonEmail);
+      if (!toPersonId) {
+        toPersonId = event.data.personId; // Needed to send messages to guest users: personId works for both regular and guest accounts
+        console.log("[WxCC]: agent personId set to", toPersonId);
         chatSend.disabled = false;
         chatSend.style.opacity = "1";
       }
@@ -282,9 +283,9 @@ async function startVideo(webex) {
 
     endBtn.style.display = "";
     endBtn.addEventListener("click", async () => {
-      if (toPersonEmail) {
+      if (toPersonId) {
         try {
-          await webex.messages.create({ toPersonEmail, text: "Customer ended the meeting" });
+          await webex.messages.create({ toPersonId, text: "Customer ended the meeting" }); // Needed to send messages to guest users
           console.log("[WxCC]: end notification sent to agent");
         } catch (e) {
           console.error("[WxCC]: failed to send end notification", e);
@@ -341,7 +342,7 @@ async function sendMessage(webex) {
   chatInput.focus();
 
   try {
-    await webex.messages.create({ toPersonEmail, text });
+    await webex.messages.create({ toPersonId, text }); // Needed to send messages to guest users
     console.log("[WxCC]: message sent successfully");
     setStatus("");
   } catch (error) {
