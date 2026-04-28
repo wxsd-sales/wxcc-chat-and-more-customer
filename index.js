@@ -7,6 +7,7 @@ const VIDEO_DESTINATION = new URLSearchParams(window.location.search).get("desti
 // Needed to send messages to guest users: use personId instead of personEmail
 let toPersonId = null; // set when first message is received from agent
 let VIDEO_DESTINATION_OVERRIDE = null; // set when agent sends /meetinglink
+let activeMeeting = null; // set when meeting is joined, used to handle /endmeeting from agent
 // const INAPP_APP_ID = "VI24093513";
 const INAPP_APP_ID = "DA05221332";
 const INAPP_USER_ID = "6806ea7s-a04e-4fdb-9d86-0b33626f3577";
@@ -175,6 +176,19 @@ async function initMessaging(webex) {
         startVideo(webex);
         return;
       }
+      if (text && text.trim() === "/endmeeting") {
+        console.log("[WxCC]: /endmeeting received from agent, leaving meeting...");
+        if (activeMeeting) {
+          activeMeeting.leave().catch(() => {});
+          activeMeeting = null;
+        }
+        document.getElementById("header-end").style.display = "none";
+        document.getElementById("video-container").style.display = "none";
+        document.getElementById("hero-image").style.display = "";
+        document.getElementById("header-camera").style.opacity = "0.4";
+        document.getElementById("header-mic").style.opacity = "0.4";
+        return;
+      }
       appendMessage("them", text);
     });
   } catch (error) {
@@ -195,6 +209,7 @@ async function startVideo(webex) {
     const destination = VIDEO_DESTINATION_OVERRIDE || VIDEO_DESTINATION;
     console.log("[WxCC]: joining meeting at", destination);
     const meeting = await webex.meetings.create(destination);
+    activeMeeting = meeting; // Store reference so /endmeeting message handler can call leave()
     console.log("[WxCC]: meeting created", meeting);
 
     // STEP-4b: Create local camera and microphone streams.
@@ -296,11 +311,13 @@ async function startVideo(webex) {
       } catch (e) {
         // SDK may throw getCurUserType internally but leave still succeeds
       }
+      activeMeeting = null;
       console.log("[WxCC]: meeting left");
       resetVideoUI();
     });
 
     function resetVideoUI() {
+      activeMeeting = null;
       endBtn.style.display = "none";
       document.getElementById("video-container").style.display = "none";
       document.getElementById("hero-image").style.display = "";

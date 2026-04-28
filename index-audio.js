@@ -7,6 +7,7 @@ const INAPP_APP_ID = "DA05221332";
 const INAPP_USER_ID = "6806ea7s-a04e-4fdb-9d86-0b33626f3577";
 
 let VIDEO_DESTINATION_OVERRIDE = null; // set when agent sends /meetinglink
+let activeMeeting = null; // set when meeting is joined, used to handle /endmeeting from agent
 // Needed to send messages to guest users: use personId instead of personEmail
 let toPersonId = null; // set when first message is received from agent
 
@@ -131,6 +132,18 @@ async function initMessaging(webex) {
         startAudio(webex);
         return;
       }
+      if (text && text.trim() === "/endmeeting") {
+        console.log("[WxCC]: /endmeeting received from agent, leaving call...");
+        if (activeMeeting) {
+          activeMeeting.leave().catch(() => {});
+          activeMeeting = null;
+        }
+        document.getElementById("header-end").style.display = "none";
+        document.getElementById("call-status").classList.remove("active");
+        document.getElementById("hero-image").style.opacity = "1";
+        document.getElementById("header-mic").style.opacity = "0.4";
+        return;
+      }
     });
   } catch (error) {
     console.error("[WxCC]: messages listen error:", error);
@@ -147,6 +160,7 @@ async function startAudio(webex) {
     const destination = VIDEO_DESTINATION_OVERRIDE || VIDEO_DESTINATION;
     console.log("[WxCC]: joining meeting at", destination);
     const meeting = await webex.meetings.create(destination);
+    activeMeeting = meeting; // Store reference so /endmeeting message handler can call leave()
     console.log("[WxCC]: meeting created", meeting);
 
     // STEP-4b: Create microphone stream only — no camera.
