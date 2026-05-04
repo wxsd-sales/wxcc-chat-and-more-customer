@@ -52,7 +52,7 @@ async function requestAgent(customerName, customerId) {
     }),
   });
 
-  console.log(`[WxCC]: agent request to ${BACKEND_URL} for ${mediaType} and ${customerEmail} sent, status:", ${response.status}`);
+  console.log(`[WxCC]: agent request to ${BACKEND_URL} for ${mediaType} and ${CUSTOMER_EMAIL} sent, status:", ${response.status}`);
 } 
 
 // Returns token from URL param if present, otherwise fetches from backend.
