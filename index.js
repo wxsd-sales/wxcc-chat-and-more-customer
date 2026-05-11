@@ -474,6 +474,43 @@ async function startQ2Q(webex) {
     console.log("[WxCC]: Q2Q meeting joined");
     setStatus("");
 
+    // Wire up camera, mic and end buttons (same controls as the chat-driven flow)
+    const cameraBtn = document.getElementById("header-camera");
+    const micBtn = document.getElementById("header-mic");
+    const endBtn = document.getElementById("header-end");
+
+    endBtn.style.display = "";
+    endBtn.addEventListener("click", async () => {
+      console.log("[WxCC]: Q2Q end button clicked");
+      try {
+        await meeting.leave();
+      } catch (e) {
+        // SDK may throw getCurUserType internally but leave still succeeds
+      }
+      activeMeeting = null;
+      console.log("[WxCC]: Q2Q meeting left");
+      endBtn.style.display = "none";
+      document.getElementById("video-container").style.display = "none";
+      document.getElementById("hero-image").style.display = "";
+      cameraBtn.style.opacity = "0.4";
+      micBtn.style.opacity = "0.4";
+    });
+
+    cameraBtn.style.opacity = "1";
+    micBtn.style.opacity = "1";
+
+    cameraBtn.addEventListener("click", () => {
+      const newMuted = !cameraStream.userMuted;
+      cameraStream.setUserMuted(newMuted);
+      cameraBtn.style.opacity = newMuted ? "0.4" : "1";
+    });
+
+    micBtn.addEventListener("click", () => {
+      const newMuted = !microphoneStream.userMuted;
+      microphoneStream.setUserMuted(newMuted);
+      micBtn.style.opacity = newMuted ? "0.4" : "1";
+    });
+
     // Invite the static SIP endpoint into the meeting via the BE callout endpoint
     console.log("[WxCC]: Q2Q calling out to SIP address:", Q2Q_SIP_ADDRESS, "meetingId:", meetingId);
     try {
