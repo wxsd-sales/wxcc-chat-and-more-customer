@@ -11,7 +11,7 @@ let activeMeeting = null; // set when meeting is joined, used to handle /endmeet
 // const INAPP_APP_ID = "VI24093513";
 const INAPP_APP_ID = "DA05221332";
 const INAPP_USER_ID = "6806ea7s-a04e-4fdb-9d86-0b33626f3577";
-const CUSTOMER_EMAIL = "vvazquez@cxocoe.us";
+const CUSTOMER_EMAIL = "vvazquez@wxsd.us";
 
 const chatHistory = document.getElementById("chat-history");
 const chatInput = document.getElementById("chat-input");
