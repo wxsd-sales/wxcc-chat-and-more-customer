@@ -404,6 +404,7 @@ async function startQ2Q(webex) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         interactionId: "q2q-customer", // no WxCC interaction in Q2Q mode
+        hostemail: "test@example.com", // not user in G2G, BE stills expects it
       }),
     });
     const meetingData = await meetingResponse.json();
