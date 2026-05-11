@@ -3,6 +3,10 @@ const BACKEND_URL = "https://be-guest-and-meeting-creation-production.up.railway
 // const WXCC_HOOK_URL = "https://hooks.us.webexconnect.io/events/12IOCZHHTT";
 const WXCC_HOOK_URL = "https://hooks.us.webexconnect.io/events/HILBRZW77M";
 const VIDEO_DESTINATION = new URLSearchParams(window.location.search).get("destination");
+// Q2Q (Guest-to-Guest) mode: when ?Q2Q=true, the customer page creates its own Webex meeting,
+// joins it directly using the guest token, and invites a static SIP endpoint via the BE callout.
+const Q2Q_MODE = new URLSearchParams(window.location.search).get("Q2Q") === "true";
+const Q2Q_SIP_ADDRESS = "test.time@sip5060.net";
 
 // Needed to send messages to guest users: use personId instead of personEmail
 let toPersonId = null; // set when first message is received from agent
@@ -138,7 +142,12 @@ async function init() {
       .register()
       .then(() => {
         console.log("[WxCC]: meetings registered");
-        initMessaging(webex);
+        if (Q2Q_MODE) {
+          console.log("[WxCC]: Q2Q mode enabled — bypassing chat flow");
+          startQ2Q(webex);
+        } else {
+          initMessaging(webex);
+        }
       })
       .catch((err) => console.error("[WxCC]: meetings register error", err));
   });
@@ -369,6 +378,115 @@ async function startVideo(webex) {
     console.error("[WxCC]: error message:", error.message);
     console.error("[WxCC]: error stack:", error.stack);
     setStatus("Could not start video.");
+  }
+}
+
+// Q2Q (Guest-to-Guest) mode: skip the chat/agent-routing flow entirely.
+// 1. Create a Webex meeting via the BE (reuses /api/create-meeting; no hostEmail since this is fully G2G).
+// 2. Join the meeting directly with the guest token using the SIP address as destination, hostKey as pin.
+// 3. Invite a static SIP endpoint into the meeting via the BE callout endpoint.
+async function startQ2Q(webex) {
+  try {
+    // Hide chat UI since there is no agent chat in Q2Q mode
+    const chatWrapper = document.getElementById("chat-wrapper");
+    if (chatWrapper) chatWrapper.style.display = "none";
+
+    setStatus("Creating meeting...");
+    console.log("[WxCC]: Q2Q creating meeting via BE");
+
+    // No hostEmail for Q2Q — both participants are guests, service account creates the meeting
+    const meetingResponse = await fetch(`${BACKEND_URL}/api/create-meeting`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        interactionId: "q2q-customer", // no WxCC interaction in Q2Q mode
+      }),
+    });
+    const meetingData = await meetingResponse.json();
+    console.log("[WxCC]: Q2Q BE meeting API response", meetingResponse.status, meetingData);
+    if (!meetingResponse.ok) {
+      throw new Error(`Q2Q meeting creation failed: ${meetingData.message || meetingData.errorCode}`);
+    }
+    console.log("[WxCC]: Q2Q meeting created", meetingData.id, meetingData.sipAddress, meetingData.hostKey);
+
+    const meetingId = meetingData.id;
+    const sipAddress = meetingData.sipAddress;
+    const hostKey = meetingData.hostKey;
+
+    // Create the SDK meeting object using the SIP address (works with guest token)
+    setStatus("Joining meeting...");
+    console.log("[WxCC]: Q2Q creating SDK meeting for SIP:", sipAddress);
+    const meeting = await webex.meetings.create(sipAddress);
+    activeMeeting = meeting;
+    console.log("[WxCC]: Q2Q SDK meeting created", meeting);
+
+    // Verify password (hostKey) before joining, same as the agent flow
+    console.log("[WxCC]: Q2Q passwordStatus before verify:", meeting.passwordStatus);
+    if (meeting.passwordStatus === "REQUIRED") {
+      const verifyResult = await meeting.verifyPassword(hostKey);
+      console.log("[WxCC]: Q2Q verifyPassword result:", verifyResult);
+      if (!verifyResult.isPasswordValid) {
+        console.error("[WxCC]: Q2Q hostKey verification failed", verifyResult);
+      }
+    }
+
+    // Local streams
+    const microphoneStream = await webex.meetings.mediaHelpers.createMicrophoneStream({
+      echoCancellation: true,
+      noiseSuppression: true,
+    });
+    const cameraStream = await webex.meetings.mediaHelpers.createCameraStream({ width: 640, height: 480 });
+    console.log("[WxCC]: Q2Q local streams created");
+    document.getElementById("self-view").srcObject = cameraStream.outputStream;
+
+    // Wire up media events to render remote streams
+    meeting.on("error", (error) => console.error("[WxCC]: Q2Q meeting error", error));
+    meeting.on("media:ready", (media) => {
+      console.log("[WxCC]: Q2Q media:ready", media.type);
+      if (media.type === "remoteVideo") {
+        document.getElementById("remote-view-video").srcObject = media.stream;
+        document.getElementById("video-container").style.display = "";
+        document.getElementById("hero-image").style.display = "none";
+      } else if (media.type === "remoteAudio") {
+        document.getElementById("remote-view-audio").srcObject = media.stream;
+      }
+    });
+    meeting.on("media:stopped", (media) => {
+      console.log("[WxCC]: Q2Q media:stopped", media.type);
+      if (media.type === "remoteAudio") document.getElementById("remote-view-audio").srcObject = null;
+      if (media.type === "remoteVideo") document.getElementById("remote-view-video").srcObject = null;
+    });
+
+    // Join with hostKey as pin so the guest joins as host/moderator
+    await meeting.joinWithMedia({
+      joinOptions: { pin: hostKey, moderator: true },
+      mediaOptions: {
+        allowMediaInLobby: true,
+        bundlePolicy: "max-bundle",
+        localStreams: { microphone: microphoneStream, camera: cameraStream },
+      },
+    });
+    console.log("[WxCC]: Q2Q meeting joined");
+    setStatus("");
+
+    // Invite the static SIP endpoint into the meeting via the BE callout endpoint
+    console.log("[WxCC]: Q2Q calling out to SIP address:", Q2Q_SIP_ADDRESS, "meetingId:", meetingId);
+    try {
+      const calloutResponse = await fetch(`${BACKEND_URL}/api/callout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          meetingId: meetingId,
+          address: Q2Q_SIP_ADDRESS,
+        }),
+      });
+      console.log("[WxCC]: Q2Q callout response status:", calloutResponse.status);
+    } catch (e) {
+      console.error("[WxCC]: Q2Q callout error", e);
+    }
+  } catch (error) {
+    console.error("[WxCC]: startQ2Q error:", error);
+    setStatus("Could not start Q2Q session.");
   }
 }
 
