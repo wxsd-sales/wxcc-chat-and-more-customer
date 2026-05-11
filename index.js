@@ -5,7 +5,11 @@ const WXCC_HOOK_URL = "https://hooks.us.webexconnect.io/events/HILBRZW77M";
 const VIDEO_DESTINATION = new URLSearchParams(window.location.search).get("destination");
 // Q2Q (Guest-to-Guest) mode: when ?Q2Q=true, the customer page creates its own Webex meeting,
 // joins it directly using the guest token, and invites a static SIP endpoint via the BE callout.
-const Q2Q_MODE = new URLSearchParams(window.location.search).get("Q2Q") === "true";
+const Q2Q_MODE = (() => {
+  const params = new URLSearchParams(window.location.search);
+  const value = params.get("Q2Q") || params.get("q2q");
+  return value !== null && value.toLowerCase() === "true";
+})();
 const Q2Q_SIP_ADDRESS = "test.time@sip5060.net";
 
 // Needed to send messages to guest users: use personId instead of personEmail
