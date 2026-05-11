@@ -17,6 +17,25 @@ function setStatus(text) {
   statusEl.textContent = text;
 }
 
+// Renders a centered "Take Survey" button on top of the page. Triggered by /survey <url> from the agent.
+// Click opens the survey in a new tab; the raw URL is never displayed to the customer.
+function showSurveyButton(surveyLink) {
+  // Avoid duplicate buttons if /survey is sent more than once
+  const existing = document.getElementById("survey-button");
+  if (existing) existing.remove();
+
+  const btn = document.createElement("button");
+  btn.id = "survey-button";
+  btn.textContent = "Take Survey";
+  btn.style.cssText = "position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background-color:#0078d4; color:#fff; border:none; border-radius:24px; padding:14px 28px; cursor:pointer; font-size:1rem; box-shadow:0 4px 12px rgba(0,0,0,0.2); z-index:1000;";
+  btn.addEventListener("click", () => {
+    console.log("[WxCC]: customer clicked survey button, opening:", surveyLink);
+    window.open(surveyLink, "_blank");
+  });
+  document.body.appendChild(btn);
+  console.log("[WxCC]: survey button shown");
+}
+
 // STEP-0: Notify WxCC to assign an agent for this customer session.
 // Proxied through the BE to avoid CORS issues with the routing API.
 
@@ -52,7 +71,7 @@ async function requestAgent(customerName, customerId) {
     }),
   });
 
-  console.log(`[WxCC]: agent request to ${BACKEND_URL} for ${mediaType} and ${customerEmail} sent, status:", ${response.status}`);
+  console.log(`[WxCC]: agent request to ${BACKEND_URL} for ${mediaType} and ${CUSTOMER_EMAIL} sent, status:", ${response.status}`);
 } 
 
 // Returns token from URL param if present, otherwise fetches from backend.
@@ -142,6 +161,12 @@ async function initMessaging(webex) {
         document.getElementById("call-status").classList.remove("active");
         document.getElementById("hero-image").style.opacity = "1";
         document.getElementById("header-mic").style.opacity = "0.4";
+        return;
+      }
+      if (text && text.trim().startsWith("/survey ")) {
+        const surveyLink = text.trim().substring("/survey ".length);
+        console.log("[WxCC]: /survey received, link:", surveyLink);
+        showSurveyButton(surveyLink);
         return;
       }
     });
