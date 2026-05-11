@@ -16,7 +16,7 @@ const statusEl = document.getElementById("status");
 function setStatus(text) {
   statusEl.textContent = text;
 }
-
+ 
 // Renders a centered "Take Survey" button on top of the page. Triggered by /survey <url> from the agent.
 // Click opens the survey in a new tab; the raw URL is never displayed to the customer.
 function showSurveyButton(surveyLink) {
