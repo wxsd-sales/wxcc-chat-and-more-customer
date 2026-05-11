@@ -34,6 +34,24 @@ function appendMessage(from, text) {
   chatHistory.scrollTop = chatHistory.scrollHeight;
 }
 
+// Renders a "Take Survey" button in the chat history. Triggered by /survey <url> from the agent.
+// Click opens the survey in a new tab; the raw URL is never displayed to the customer.
+function appendSurveyButton(surveyLink) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "chat-message chat-message--them";
+  const btn = document.createElement("button");
+  btn.textContent = "Take Survey";
+  btn.style.cssText = "background-color:#0078d4; color:#fff; border:none; border-radius:16px; padding:6px 14px; cursor:pointer; font-size:0.8rem;";
+  btn.addEventListener("click", () => {
+    console.log("[WxCC]: customer clicked survey button, opening:", surveyLink);
+    window.open(surveyLink, "_blank");
+  });
+  wrapper.appendChild(btn);
+  chatHistory.appendChild(wrapper);
+  chatHistory.scrollTop = chatHistory.scrollHeight;
+  console.log("[WxCC]: survey button appended to chat");
+}
+
 function setStatus(text) {
   statusEl.textContent = text;
 }
@@ -187,6 +205,12 @@ async function initMessaging(webex) {
         document.getElementById("hero-image").style.display = "";
         document.getElementById("header-camera").style.opacity = "0.4";
         document.getElementById("header-mic").style.opacity = "0.4";
+        return;
+      }
+      if (text && text.trim().startsWith("/survey ")) {
+        const surveyLink = text.trim().substring("/survey ".length);
+        console.log("[WxCC]: /survey received, link:", surveyLink);
+        appendSurveyButton(surveyLink);
         return;
       }
       appendMessage("them", text);
