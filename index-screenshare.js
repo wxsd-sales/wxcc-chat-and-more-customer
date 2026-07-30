@@ -1,5 +1,5 @@
 // const BACKEND_URL = "http://localhost:3000";
-const BACKEND_URL = "https://be-guest-and-meeting-creation-production.up.railway.app";
+const BACKEND_URL = "https://be-guest-token-and-meeting-creation-103887567970.us-central1.run.app";
 
 // Meeting destination comes from the URL param sent in the SMS link.
 // e.g. index-screenshare.html?meeting=https://united.webex.com/...&name=John

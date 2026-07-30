@@ -1,5 +1,5 @@
 // const BACKEND_URL = "http://localhost:3000";
-const BACKEND_URL = "https://be-guest-and-meeting-creation-production.up.railway.app";
+const BACKEND_URL = "https://be-guest-token-and-meeting-creation-103887567970.us-central1.run.app";
 // const WXCC_HOOK_URL = "https://hooks.us.webexconnect.io/events/12IOCZHHTT";
 const WXCC_HOOK_URL = "https://hooks.us.webexconnect.io/events/HILBRZW77M";
 const VIDEO_DESTINATION = new URLSearchParams(window.location.search).get("destination");
